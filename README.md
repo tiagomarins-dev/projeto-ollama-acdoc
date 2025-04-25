@@ -1,7 +1,7 @@
-# Ollama Multi-Model API
+# Ollama Multi-Model API (com Setup Manual)
 
 Este projeto permite rodar múltiplos modelos LLM localmente com **Ollama** e expor uma API simples via **FastAPI**.  
-Você pode consultar modelos como `mistral`, `llama2` e `deepseek-chat` usando um único endpoint HTTP.
+Agora também disponível com **instalação completa via script `.sh`**.
 
 ---
 
@@ -10,77 +10,80 @@ Você pode consultar modelos como `mistral`, `llama2` e `deepseek-chat` usando u
 - Executa modelos locais com Ollama
 - API unificada para múltiplos modelos
 - Totalmente dockerizado
+- Setup 100% automatizado com script bash
 - Ideal para uso com FastAPI + RAG
 
 ---
 
 ## 📦 Requisitos
 
-- Docker
-- Docker Compose
-- Ollama (instalado via container)
+- Ubuntu Server 20.04+ ou superior
+- Permissões de root para instalar pacotes
 
 ---
 
-## 🧪 Como usar
+## 🛠️ Instalação Automática
 
-### 1. Suba os containers:
+1. Faça login no seu servidor via SSH.
+2. Clone este repositório ou crie o arquivo `setup-ollama-server.sh`.
+3. Dê permissão de execução:
 
 ```bash
-docker-compose up --build -d
+chmod +x setup-ollama-server.sh
 ```
 
-Isso iniciará a API em `http://localhost:8000` e o Ollama em `http://localhost:11434`.
+4. Execute:
 
-### 2. Faça uma requisição POST:
+```bash
+./setup-ollama-server.sh
+```
 
-**Endpoint:**
+5. Acesse a API:
 
 ```
-POST /gerar?modelo=mistral
+http://SEU_IP:8000/docs
+```
+
+---
+
+## 📡 Como usar a API
+
+### Endpoint `/gerar`
+
+**Método:** `POST`
+
+**URL:** 
+```
+/gerar?modelo=mistral&tokens=200
 ```
 
 **Body JSON:**
 
 ```json
 {
-  "prompt": "Explique a teoria da relatividade."
+  "prompt": "Explique a inteligência artificial."
 }
 ```
 
-Você pode substituir `modelo` por:
-- `mistral`
-- `llama2`
-- `deepseek-chat`
+**Parâmetros disponíveis:**
+- `modelo` (query param) — Exemplo: `mistral`, `llama2`, `deepseek-chat`
+- `tokens` (query param) — Limite de geração de tokens (opcional, padrão 300)
 
 ---
 
-## 🛠 Arquitetura
-
-- **FastAPI** para expor a API
-- **Ollama** para gerar as respostas localmente
-- **Docker Compose** para orquestrar tudo
-
----
-
-## 📁 Estrutura
+## 📁 Estrutura do Projeto
 
 ```
 ├── main.py              # API FastAPI
 ├── Dockerfile           # Ambiente Python
 ├── docker-compose.yml   # Orquestra API + Ollama
 ├── requirements.txt     # Dependências Python
+├── setup-ollama-server.sh # Script de instalação completa
 └── README.md            # Este arquivo
 ```
 
 ---
 
-## 🧠 Dica
-
-Se estiver usando cloud-init (como na Hetzner), clone este repositório automaticamente e execute o `docker-compose up` no boot do servidor.
-
----
-
 ## ✨ Autor
 
-Criado por Tiago com ❤️ e LLMs.
+Criado por Tiago Marins.
