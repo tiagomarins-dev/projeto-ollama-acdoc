@@ -1,11 +1,16 @@
 version: "3.9"
+
 services:
   api:
-    build: .
+    build: ./rag_app
     ports:
-      - "8000:8000"
+      - "9000:9000"
     depends_on:
       - ollama
+    volumes:
+      - ./docs:/docs
+    environment:
+      - OLLAMA_URL=http://ollama:11434
 
   ollama:
     image: ollama/ollama
