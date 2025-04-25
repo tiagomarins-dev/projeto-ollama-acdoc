@@ -82,6 +82,50 @@ http://SEU_IP:8000/docs
 └── README.md            # Este arquivo
 ```
 
+
+---
+
+## 📚 Modelos disponíveis para uso na API
+
+Todos os modelos abaixo podem ser usados assim:
+
+```
+POST /gerar?modelo=nome-do-modelo&tokens=200
+```
+
+**Exemplo:**
+```
+/gerar?modelo=phi4&tokens=300
+```
+
+### ✅ Modelos instalados com o script:
+
+- `mistral` → `?modelo=mistral`
+- `llama2` → `?modelo=llama2`
+- `llama3` → `?modelo=llama3`
+- `llama3:8b` → `?modelo=llama3`
+- `llama3:70b` → `?modelo=llama3`
+- `deepseek-coder` → `?modelo=deepseek-coder`
+- `deepseek-r1:7b` → `?modelo=deepseek-r1`
+- `deepseek-r1:14b` → `?modelo=deepseek-r1`
+- `gemma:2b` → `?modelo=gemma`
+- `gemma3` → `?modelo=gemma3`
+- `phi` → `?modelo=phi`
+- `phi4` → `?modelo=phi4`
+- `phi3` → `?modelo=phi3`
+- `phi3.5` → `?modelo=phi3.5`
+- `qwen2.5:7b` → `?modelo=qwen2.5`
+- `qwen2.5:14b` → `?modelo=qwen2.5`
+- `qwen2.5-coder:7b` → `?modelo=qwen2.5-coder`
+- `mixtral:8x7b` → `?modelo=mixtral`
+- `mixtral:8x22b` → `?modelo=mixtral`
+- `dolphin-llama3:8b` → `?modelo=dolphin-llama3`
+- `starcoder2:7b` → `?modelo=starcoder2`
+- `codellama:7b` → `?modelo=codellama`
+- `command-r` → `?modelo=command-r`
+- `wizardlm2:7b` → `?modelo=wizardlm2`
+- `tinyllama` → `?modelo=tinyllama`
+
 ---
 
 ## ✨ Autor
