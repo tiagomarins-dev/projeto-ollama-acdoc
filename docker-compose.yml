@@ -3,7 +3,9 @@ version: "3.9"
 
 services:
   api:
-    build: ./rag_app
+    build:
+    context: .
+    dockerfile: rag_app/Dockerfile
     ports:
       - "9000:9000"
     depends_on:
