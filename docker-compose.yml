@@ -1,11 +1,8 @@
-# docker-compose.yml
 version: "3.9"
 
 services:
   api:
-    build:
-    context: .
-    dockerfile: rag_app/Dockerfile
+    build: ./rag_app
     ports:
       - "9000:9000"
     depends_on:
