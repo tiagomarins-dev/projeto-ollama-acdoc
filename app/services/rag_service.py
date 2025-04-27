@@ -63,21 +63,3 @@ def chamar_modelo(prompt: str, modelo: str = "mistral"):
     )
     return response.json()["response"]
 
-def buscar_resposta222(perfil: str, pergunta: str, modelo: str = "mistral", tokens: int = 300):
-    """Faz busca RAG + agente customizado"""
-    index, textos = criar_index(perfil)
-    
-    emb_pergunta = model_embedding.encode([pergunta]).astype('float32')
-    D, I = index.search(emb_pergunta, k=3)
-
-    contexto = "\n\n".join([textos[i] for i in I[0] if i < len(textos)])
-
-    # Pega instruções do agente
-    agente = carregar_agente(perfil)
-    instrucoes = agente.instrucoes if agente else "Você é um assistente útil."
-
-    # Monta o prompt
-    prompt_completo = f"{instrucoes}\n\nUse as informações a seguir para responder:\n{contexto}\n\nPergunta: {pergunta}\nResposta:"
-    
-    # Gera a resposta usando o modelo
-    return gerar_texto(PromptRequest(prompt=prompt_completo), modelo, tokens)
