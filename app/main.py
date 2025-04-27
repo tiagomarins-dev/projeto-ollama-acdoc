@@ -38,3 +38,8 @@ def usar_rag(perfil: str, req: PromptRequest, modelo: str = "mistral", tokens: i
 @app.post("/gerar")
 def gerar(req: PromptRequest, modelo: str = "mistral", tokens: int = 100):
     return gerar_texto(req, modelo, tokens)
+
+@app.post("/reindexar/{perfil}")
+def reindexar(perfil: str):
+    criar_index(perfil)
+    return {"message": f"Índice do perfil {perfil} recriado com sucesso."}
