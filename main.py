@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from app.ollama_service import gerar_texto
-from app.rag_service import consultar_documento
+from ollama_service import gerar_texto
+from rag_service import consultar_documento
 
 app = FastAPI()
 
