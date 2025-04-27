@@ -1,133 +1,178 @@
-# Ollama Multi-Model API (com Setup Manual)
+# Ollama Multi-Model API + RAG (Setup Manual Atualizado)
 
-Este projeto permite rodar múltiplos modelos LLM localmente com **Ollama** e expor uma API simples via **FastAPI**.  
-Agora também disponível com **instalação completa via script `.sh`**.
+Este projeto permite rodar múltiplos modelos LLM localmente com **Ollama**, expor uma API completa via **FastAPI** e utilizar **RAG** para consultas inteligentes em documentos.  
+Agora também disponível com **upload remoto de documentos** e **instruções de agentes personalizados**.
 
 ---
 
 ## 🚀 Funcionalidades
 
-- Executa modelos locais com Ollama
-- API unificada para múltiplos modelos
-- Totalmente dockerizado
-- Setup 100% automatizado com script bash
-- Ideal para uso com FastAPI + RAG
+- Executa modelos locais via Ollama
+- API para gerar textos (`/gerar`)
+- API para consultar documentos (`/rag`)
+- Upload remoto de documentos (`/upload_doc`)
+- Cadastro remoto de instruções de agentes (`/upload_instrucoes`)
+- RAG (Retrieval-Augmented Generation) integrado
+- Setup 100% automatizado
+- Pronto para produção
+- Scripts de watchdog (auto-restart) e start rápido
 
 ---
 
 ## 📦 Requisitos
 
 - Ubuntu Server 20.04+ ou superior
-- Permissões de root para instalar pacotes
+- Python 3.8+
+- Permissões de root
+- Docker (opcional para quem quiser rodar com docker-compose)
+- Ollama instalado
 
 ---
 
-## 🛠️ Instalação Automática
+## 🛠️ Instalação
 
-1. Faça login no seu servidor via SSH.
-2. Clone este repositório ou crie o arquivo `setup-ollama-server.sh`.
-3. Dê permissão de execução:
+### 1. Baixar projeto
 
 ```bash
-chmod +x setup-ollama-server.sh
+git clone https://github.com/seurepo/projeto-ollama-acdoc.git
+cd projeto-ollama-acdoc
 ```
 
-4. Execute:
+### 2. Criar ambiente virtual
 
 ```bash
-./setup-ollama-server.sh
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-5. Acesse a API:
+### 3. Instalar dependências
 
+```bash
+pip install -r requirements.txt
 ```
-http://SEU_IP:8000/docs
+
+### 4. Instalar Ollama
+
+```bash
+curl https://ollama.com/install.sh | sh
+```
+
+### 5. Baixar modelo necessário
+
+```bash
+ollama pull mistral
+```
+
+### 6. Iniciar API
+
+```bash
+./start.sh
 ```
 
 ---
 
-## 📡 Como usar a API
+## 📡 Endpoints disponíveis
 
-### Endpoint `/gerar`
+### 1. Gerar texto com modelo LLM
 
-**Método:** `POST`
+**POST** `/gerar`
 
-**URL:** 
-```
-/gerar?modelo=mistral&tokens=200
-```
+**Query Params:**
+- `modelo` (obrigatório): nome do modelo (ex: `mistral`)
+- `tokens` (opcional): limite de tokens gerados (default = 300)
 
-**Body JSON:**
-
+**Body:**
 ```json
 {
   "prompt": "Explique a inteligência artificial."
 }
 ```
 
-**Parâmetros disponíveis:**
-- `modelo` (query param) — Exemplo: `mistral`, `llama2`, `deepseek-chat`
-- `tokens` (query param) — Limite de geração de tokens (opcional, padrão 300)
+---
+
+### 2. Consultar documentos (RAG)
+
+**POST** `/rag`
+
+**Body:**
+```json
+{
+  "prompt": "Qual o tema principal dos documentos enviados?"
+}
+```
+
+---
+
+### 3. Upload de documento para RAG
+
+**POST** `/upload_doc`
+
+**Form-Data:**
+- `file`: Arquivo `.txt` para adicionar ao RAG
+
+---
+
+### 4. Upload de instruções de agente
+
+**POST** `/upload_instrucoes`
+
+**Form-Data:**
+- `file`: Arquivo `.txt` contendo instruções específicas do agente
 
 ---
 
 ## 📁 Estrutura do Projeto
 
 ```
-├── main.py              # API FastAPI
-├── Dockerfile           # Ambiente Python
-├── docker-compose.yml   # Orquestra API + Ollama
-├── requirements.txt     # Dependências Python
-├── setup-ollama-server.sh # Script de instalação completa
-└── README.md            # Este arquivo
+├── app/
+│   ├── __init__.py
+│   ├── main.py              # API principal
+│   ├── services/
+│   │   ├── ollama_service.py   # Geração via Ollama
+│   │   └── rag_service.py      # Mecanismo RAG
+│   ├── models/
+│   │   └── prompt_request.py   # Modelo de requisição FastAPI
+│   └── storage/
+│       ├── documentos/         # Documentos enviados
+│       └── instrucoes/          # Instruções de agentes
+├── start.sh                   # Start automático
+├── watchdog.sh                # Watchdog auto-restart
+├── requirements.txt
+├── README.md
 ```
-
 
 ---
 
-## 📚 Modelos disponíveis para uso na API
+## 📚 Como Monitorar com Watchdog
 
-Todos os modelos abaixo podem ser usados assim:
+Para garantir que o servidor UVicorn reinicie se cair:
 
-```
-POST /gerar?modelo=nome-do-modelo&tokens=200
-```
-
-**Exemplo:**
-```
-/gerar?modelo=phi4&tokens=300
+```bash
+./watchdog.sh
 ```
 
-### ✅ Modelos instalados com o script:
+---
 
-- `mistral` → `?modelo=mistral`
-- `llama2` → `?modelo=llama2`
-- `llama3` → `?modelo=llama3`
-- `llama3:8b` → `?modelo=llama3`
-- `llama3:70b` → `?modelo=llama3`
-- `deepseek-coder` → `?modelo=deepseek-coder`
-- `deepseek-r1:7b` → `?modelo=deepseek-r1`
-- `deepseek-r1:14b` → `?modelo=deepseek-r1`
-- `gemma:2b` → `?modelo=gemma`
-- `gemma3` → `?modelo=gemma3`
-- `phi` → `?modelo=phi`
-- `phi4` → `?modelo=phi4`
-- `phi3` → `?modelo=phi3`
-- `phi3.5` → `?modelo=phi3.5`
-- `qwen2.5:7b` → `?modelo=qwen2.5`
-- `qwen2.5:14b` → `?modelo=qwen2.5`
-- `qwen2.5-coder:7b` → `?modelo=qwen2.5-coder`
-- `mixtral:8x7b` → `?modelo=mixtral`
-- `mixtral:8x22b` → `?modelo=mixtral`
-- `dolphin-llama3:8b` → `?modelo=dolphin-llama3`
-- `starcoder2:7b` → `?modelo=starcoder2`
-- `codellama:7b` → `?modelo=codellama`
-- `command-r` → `?modelo=command-r`
-- `wizardlm2:7b` → `?modelo=wizardlm2`
-- `tinyllama` → `?modelo=tinyllama`
+## 📚 Modelos compatíveis
+
+- `mistral`
+- `llama2`
+- `llama3`
+- `deepseek-coder`
+- `gemma`
+- `phi`
+- `phi4`
+- `mixtral`
+- `command-r`
+- `wizardlm2`
+- `tinyllama`
+- Outros modelos compatíveis com Ollama...
 
 ---
 
 ## ✨ Autor
 
-Criado por Tiago Marins.
+Criado com ❤️ por **Tiago Marins**.
+
+---
+
