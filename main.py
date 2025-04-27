@@ -1,24 +1,13 @@
-from fastapi import FastAPI, Query
-from pydantic import BaseModel
-import requests
+from fastapi import FastAPI
+from app.ollama_service import gerar_texto
+from app.rag_service import consultar_documento
 
 app = FastAPI()
 
-class PromptRequest(BaseModel):
-    prompt: str
-
 @app.post("/gerar")
-def gerar_texto(req: PromptRequest, modelo: str = Query("mistral"), tokens: int = Query(300)):
-    response = requests.post(
-        "http://127.0.0.1:11434/api/generate",
-        json={
-            "model": modelo,
-            "prompt": req.prompt,
-            "stream": False,
-            "num_predict": tokens
-        }
-    )
-    return response.json()
+def gerar(req: gerar_texto.PromptRequest, modelo: str = "mistral", tokens: int = 200):
+    return gerar_texto.gerar(req, modelo, tokens)
 
-
-
+@app.post("/rag")
+def rag(req: consultar_documento.RagRequest):
+    return consultar_documento.rag(req)
