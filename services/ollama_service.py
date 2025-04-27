@@ -1,7 +1,7 @@
 import requests
 from models.prompt_request import PromptRequest
 
-def gerar(req: PromptRequest, modelo: str, tokens: int):
+def gerar_texto(req: PromptRequest, modelo: str = "mistral", tokens: int = 100):
     response = requests.post(
         "http://127.0.0.1:11434/api/generate",
         json={
