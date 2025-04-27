@@ -1,13 +1,14 @@
 from fastapi import FastAPI
-from ollama_service import gerar_texto
-from rag_service import consultar_documento
+from services.ollama_service import gerar_texto
+from services.rag_service import responder_pergunta
+from models.prompt_request import PromptRequest
 
 app = FastAPI()
 
 @app.post("/gerar")
-def gerar(req: gerar_texto.PromptRequest, modelo: str = "mistral", tokens: int = 200):
-    return gerar_texto.gerar(req, modelo, tokens)
+def gerar(req: PromptRequest, modelo: str = "mistral", tokens: int = 100):
+    return gerar_texto(req, modelo, tokens)
 
 @app.post("/rag")
-def rag(req: consultar_documento.RagRequest):
-    return consultar_documento.rag(req)
+def rag(req: PromptRequest):
+    return responder_pergunta(req)
