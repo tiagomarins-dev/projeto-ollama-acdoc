@@ -1,5 +1,5 @@
 import requests
-from app.models.prompt_request import PromptRequest
+from models.prompt_request import PromptRequest
 
 def gerar(req: PromptRequest, modelo: str, tokens: int):
     response = requests.post(
