@@ -8,18 +8,14 @@ class PromptRequest(BaseModel):
     prompt: str
 
 @app.post("/gerar")
-def gerar_texto(
-    req: PromptRequest,
-    modelo: str = Query("mistral"),
-    tokens: int = Query(300)  # Novo parâmetro 'tokens' na query string
-):
+def gerar_texto(req: PromptRequest, modelo: str = Query("mistral"), tokens: int = Query(300)):
     response = requests.post(
-        "http://ollama:11434/api/generate",
+        "http://127.0.0.1:11434/api/generate",
         json={
             "model": modelo,
             "prompt": req.prompt,
             "stream": False,
-            "num_predict": tokens   # Usando o valor de tokens recebido
+            "num_predict": tokens
         }
     )
     return response.json()
