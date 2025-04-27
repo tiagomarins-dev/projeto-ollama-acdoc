@@ -1,5 +1,5 @@
 import requests
-from models.prompt_request import PromptRequest
+from app.models.prompt_request import PromptRequest
 
 def gerar_texto(req: PromptRequest, modelo: str = "mistral", tokens: int = 100):
     response = requests.post(
