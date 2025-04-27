@@ -21,6 +21,9 @@ screen -dmS "$SESSION_NAME" bash -c "
     else
         lsof -ti tcp:9000 | xargs kill -9
     fi
+    echo 'Iniciando Ollama...'
+    ollama serve &
+    sleep 5
     echo 'Subindo servidor Uvicorn...'
     uvicorn app.main:app --host 0.0.0.0 --port 9000 --proxy-headers --forwarded-allow-ips '*' --reload
 "
