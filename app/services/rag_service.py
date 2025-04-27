@@ -1,5 +1,6 @@
 import os
 import faiss
+import requests
 import numpy as np
 from typing import List
 from sentence_transformers import SentenceTransformer
