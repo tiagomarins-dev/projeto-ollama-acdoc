@@ -1,41 +1,61 @@
 import os
 import faiss
 import numpy as np
+from typing import List
 from sentence_transformers import SentenceTransformer
+from app.services.ollama_service import gerar_texto
+from app.models.prompt_request import PromptRequest
+from app.services.agent_service import carregar_agente
 
-model = SentenceTransformer('all-MiniLM-L6-v2')
+# Embeddings model
+model_embedding = SentenceTransformer('all-MiniLM-L6-v2')
 
-BASE_DIR = "docs"
-EMBEDDINGS = {}
+# Cache de índices carregados por agente
+cache_indices = {}
 
-def carregar_documentos(perfil):
+def carregar_documentos(perfil: str) -> List[str]:
+    """Carrega documentos do perfil"""
+    path = f"docs/{perfil}"
     textos = []
-    pasta = os.path.join(BASE_DIR, perfil)
-    if not os.path.exists(pasta):
-        return None
-    for filename in os.listdir(pasta):
-        path = os.path.join(pasta, filename)
-        with open(path, "r", encoding="utf-8") as f:
-            textos.append(f.read())
+    if not os.path.exists(path):
+        return textos
+    for filename in os.listdir(path):
+        if filename.endswith(".txt"):
+            with open(os.path.join(path, filename), "r", encoding="utf-8") as f:
+                textos.append(f.read())
     return textos
 
-def criar_index(perfil):
+def criar_index(perfil: str):
+    """Cria ou carrega o índice FAISS do perfil"""
+    if perfil in cache_indices:
+        return cache_indices[perfil]
+    
     textos = carregar_documentos(perfil)
     if not textos:
-        return None
-    embeddings = model.encode(textos)
-    index = faiss.IndexFlatL2(embeddings.shape[1])
-    index.add(np.array(embeddings))
-    EMBEDDINGS[perfil] = (index, textos)
-
-def buscar_resposta(perfil, pergunta):
-    if perfil not in EMBEDDINGS:
-        criar_index(perfil)
-    if perfil not in EMBEDDINGS:
-        return "Perfil não encontrado."
+        raise ValueError(f"Nenhum documento encontrado para o perfil {perfil}.")
     
-    index, textos = EMBEDDINGS[perfil]
-    pergunta_emb = model.encode([pergunta])
-    D, I = index.search(np.array(pergunta_emb), k=1)
-    resposta = textos[I[0][0]]
-    return resposta
+    embeddings = model_embedding.encode(textos)
+    index = faiss.IndexFlatL2(embeddings.shape[1])
+    index.add(np.array(embeddings, dtype='float32'))
+    
+    cache_indices[perfil] = (index, textos)
+    return index, textos
+
+def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral", tokens: int = 300):
+    """Faz busca RAG + agente customizado"""
+    index, textos = criar_index(perfil)
+    
+    emb_pergunta = model_embedding.encode([pergunta]).astype('float32')
+    D, I = index.search(emb_pergunta, k=3)
+
+    contexto = "\n\n".join([textos[i] for i in I[0] if i < len(textos)])
+
+    # Pega instruções do agente
+    agente = carregar_agente(perfil)
+    instrucoes = agente.instrucoes if agente else "Você é um assistente útil."
+
+    # Monta o prompt
+    prompt_completo = f"{instrucoes}\n\nUse as informações a seguir para responder:\n{contexto}\n\nPergunta: {pergunta}\nResposta:"
+    
+    # Gera a resposta usando o modelo
+    return gerar_texto(PromptRequest(prompt=prompt_completo), modelo, tokens)
