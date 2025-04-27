@@ -41,7 +41,29 @@ def criar_index(perfil: str):
     cache_indices[perfil] = (index, textos)
     return index, textos
 
-def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral", tokens: int = 300):
+
+def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral"):
+    # ... aqui você carrega o contexto do perfil (já existe)
+
+    prompt_completo = f"{instrucoes}\n\nContexto:\n{contexto}\n\nPergunta:\n{pergunta}"
+    
+    # Aqui passa o modelo dinâmico
+    resposta = chamar_modelo(prompt_completo, modelo=modelo)
+    
+    return resposta
+
+def chamar_modelo(prompt: str, modelo: str = "mistral"):
+    response = requests.post(
+        "http://127.0.0.1:11434/api/generate",
+        json={
+            "model": modelo,
+            "prompt": prompt,
+            "stream": False
+        }
+    )
+    return response.json()["response"]
+
+def buscar_resposta222(perfil: str, pergunta: str, modelo: str = "mistral", tokens: int = 300):
     """Faz busca RAG + agente customizado"""
     index, textos = criar_index(perfil)
     
