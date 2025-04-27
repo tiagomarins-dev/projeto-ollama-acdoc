@@ -31,8 +31,8 @@ def consultar_agente(perfil: str):
     return agent
 
 @app.post("/rag/{perfil}")
-def usar_rag(perfil: str, req: PromptRequest, modelo: str = "mistral"):
-    resposta = buscar_resposta(perfil, req.prompt, modelo=modelo)
+def usar_rag(perfil: str, req: PromptRequest, tokens: int = 300, modelo: str = "mistral"):
+    resposta = buscar_resposta(perfil, req.prompt, modelo=modelo, tokens=tokens)
     return {"resposta": resposta}
 
 @app.post("/gerar")

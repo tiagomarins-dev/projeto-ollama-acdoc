@@ -43,7 +43,7 @@ def criar_index(perfil: str):
     return index, textos
 
 
-def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral"):
+def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral", tokens: int = 300):
     # Carrega o agente e as instruções
     agent = carregar_agente(perfil)
     instrucoes = agent.instrucoes if agent else ""
@@ -64,18 +64,19 @@ def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral"):
     prompt_completo = f"{instrucoes}\n\nContexto:\n{contexto}\n\nPergunta:\n{pergunta}"
 
     # Chama o modelo especificado
-    resposta = chamar_modelo(prompt_completo, modelo=modelo)
+    resposta = chamar_modelo(prompt_completo, modelo=modelo, tokens=tokens)
     
     return resposta
 
-def chamar_modelo(prompt: str, modelo: str = "mistral"):
+def chamar_modelo(prompt: str, modelo: str = "mistral", tokens: int = 300):
     response = requests.post(
         "http://127.0.0.1:11434/api/generate",
         json={
             "model": modelo,
             "prompt": prompt,
-            "stream": False
+            "stream": False,
+            "num_predict": tokens
         }
     )
-    return response.json()["response"]
+    return response.json().get("response")
 
