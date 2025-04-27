@@ -43,3 +43,16 @@ def gerar(req: PromptRequest, modelo: str = "mistral", tokens: int = 100):
 def reindexar(perfil: str):
     criar_index(perfil)
     return {"message": f"Índice do perfil {perfil} recriado com sucesso."}
+
+@app.get("/agents")
+def listar_agentes():
+    agentes_dir = "agents"
+    if not os.path.exists(agentes_dir):
+        return {"agentes": []}
+    
+    agentes = []
+    for filename in os.listdir(agentes_dir):
+        if filename.endswith(".json"):
+            perfil = filename.replace(".json", "")
+            agentes.append(perfil)
+    return {"agentes": agentes}
