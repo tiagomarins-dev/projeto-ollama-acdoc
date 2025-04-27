@@ -43,11 +43,26 @@ def criar_index(perfil: str):
 
 
 def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral"):
-    # ... aqui você carrega o contexto do perfil (já existe)
+    # Carrega o agente e as instruções
+    agent = carregar_agente(perfil)
+    instrucoes = agent.instrucoes if agent else ""
 
-    prompt_completo = f"{instrucoes}\n\nContexto:\n{contexto}\n\nPergunta:\n{pergunta}"
+    # Carrega o índice FAISS e textos
+    if perfil not in cache_indices:
+        criar_index(perfil)
+    index, textos = cache_indices[perfil]
+
+    # Vetoriza a pergunta
+    pergunta_embedding = model_embedding.encode([pergunta])
     
-    # Aqui passa o modelo dinâmico
+    # Busca o contexto mais próximo
+    D, I = index.search(np.array(pergunta_embedding, dtype='float32'), k=1)
+    contexto = textos[I[0][0]] if I[0][0] != -1 else ""
+
+    # Monta o prompt completo
+    prompt_completo = f"{instrucoes}\n\nContexto:\n{contexto}\n\nPergunta:\n{pergunta}"
+
+    # Chama o modelo especificado
     resposta = chamar_modelo(prompt_completo, modelo=modelo)
     
     return resposta
