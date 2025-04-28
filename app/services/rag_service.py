@@ -115,13 +115,7 @@ def buscar_resposta(
         resposta = chamar_modelo(prompt_completo, modelo=modelo, tokens=tokens, stream=stream)
 
         # Retornar resposta estruturada
-        return {
-            "instrucoes": instrucoes,
-            "contexto_usado": contexto,
-            "prompt_usuario": pergunta,
-            "prompt_final_enviado": prompt_completo,
-            "resposta": resposta
-        }
+        return resposta
     except Exception as e:
         print(f"Erro em buscar_resposta: {e}")
         return {"error": f"Erro ao processar requisição: {str(e)}"}
