@@ -40,13 +40,23 @@ def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral", tokens:
     if not agente:
         return {"error": "Perfil não encontrado."}
 
-    # Buscar o contexto mais relevante usando embeddings
-    contexto = buscar_no_index(perfil, pergunta)
+    # Novo trecho: buscar contexto pelo índice
+    index_path = f"docs/{perfil}/index.pkl"
+    if not os.path.exists(index_path):
+        return {"error": "Perfil ainda não indexado."}
 
-    if not contexto:
-        return {"error": "Nenhum contexto encontrado para este perfil."}
+    with open(index_path, "rb") as f:
+        index = pickle.load(f)
 
-    instrucoes = agente.instrucoes if hasattr(agente, "instrucoes") else ""
+    # Realiza a busca semântica
+    question_embedding = model_embedder.encode(pergunta, convert_to_tensor=True)
+    hits = util.semantic_search(question_embedding, index["embeddings"], top_k=5)
+    hits = hits[0]  # semantic_search retorna uma lista dentro de uma lista
+
+    trechos_relevantes = [index["texts"][hit["corpus_id"]] for hit in hits]
+    contexto = "\n\n".join(trechos_relevantes)
+
+    instrucoes = agente.instrucoes if isinstance(agente, Agent) else agente.get("instrucoes", "")
 
     prompt_completo = f"{instrucoes}\n\nContexto:\n{contexto}\n\nPergunta:\n{pergunta}"
 
