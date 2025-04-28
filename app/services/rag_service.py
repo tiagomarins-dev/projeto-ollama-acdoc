@@ -23,11 +23,21 @@ def chamar_modelo(prompt_completo, modelo="mistral", tokens=300, stream=False):
             "prompt": prompt_completo,
             "stream": stream,
             "num_predict": tokens
-        }
+        },
+        stream=stream  # 👈 importante: stream=True no requests também
     )
     response.raise_for_status()
-    data = response.json()
-    return data.get("response", "")
+
+    if stream:
+        resposta = ""
+        for linha in response.iter_lines():
+            if linha:
+                parte = json.loads(linha.decode("utf-8"))
+                resposta += parte.get("response", "")
+        return resposta
+    else:
+        data = response.json()
+        return data.get("response", "")
 
 # Função principal de busca de resposta
 
