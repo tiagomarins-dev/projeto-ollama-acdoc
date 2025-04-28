@@ -36,33 +36,47 @@ def carregar_todos_arquivos(perfil: str, max_tokens: int = 5000):
 
 # Função para chamar o modelo Ollama
 def chamar_modelo(prompt_completo, modelo="mistral", tokens=300, stream=False):
-    try:
-        response = requests.post(
-            "http://127.0.0.1:11434/api/generate",
-            json={
-                "model": modelo,
-                "prompt": prompt_completo,
-                "stream": stream,
-                "num_predict": tokens
-            },
-            stream=stream,
-            timeout=60  # Adicionar timeout para evitar espera infinita
-        )
-        response.raise_for_status()
+    # URL do Ollama baseado no ambiente (container vs local)
+    ollama_url = "http://ollama:11434/api/generate"
+    
+    # Fallback para URL local se a primeira falhar
+    urls_to_try = [ollama_url, "http://127.0.0.1:11434/api/generate"]
+    
+    last_error = None
+    for url in urls_to_try:
+        try:
+            print(f"Tentando conectar a: {url}")
+            response = requests.post(
+                url,
+                json={
+                    "model": modelo,
+                    "prompt": prompt_completo,
+                    "stream": stream,
+                    "num_predict": tokens
+                },
+                stream=stream,
+                timeout=60  # Adicionar timeout para evitar espera infinita
+            )
+            response.raise_for_status()
 
-        if stream:
-            resposta = ""
-            for linha in response.iter_lines():
-                if linha:
-                    parte = json.loads(linha.decode("utf-8"))
-                    resposta += parte.get("response", "")
-            return resposta
-        else:
-            data = response.json()
-            return data.get("response", "")
-    except Exception as e:
-        print(f"Erro ao chamar modelo: {e}")
-        return f"Erro ao gerar resposta: {str(e)}"
+            if stream:
+                resposta = ""
+                for linha in response.iter_lines():
+                    if linha:
+                        parte = json.loads(linha.decode("utf-8"))
+                        resposta += parte.get("response", "")
+                return resposta
+            else:
+                data = response.json()
+                return data.get("response", "")
+                
+        except Exception as e:
+            print(f"Erro ao chamar modelo em {url}: {e}")
+            last_error = e
+            continue  # Tenta a próxima URL
+    
+    # Se chegou aqui, todas as URLs falharam
+    return f"Erro ao gerar resposta: {str(last_error)}"
 
 # Função principal de busca de resposta
 def buscar_resposta(
