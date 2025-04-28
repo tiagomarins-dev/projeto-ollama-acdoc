@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File
+from fastapi import Query
 from app.services.agent_service import salvar_agente, carregar_agente
 from app.services.rag_service import buscar_resposta, criar_index
 from app.services.ollama_service import gerar_texto
