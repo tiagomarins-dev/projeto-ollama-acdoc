@@ -23,7 +23,6 @@ def carregar_todos_arquivos(perfil: str, max_tokens: int = 5000):
                 with open(os.path.join(dir_path, file_name), "r") as f:
                     texto = f.read()
                     contexto += texto + "\n\n"
-    # Corta o contexto se ultrapassar max_tokens caracteres aproximados
     if len(contexto.split()) > max_tokens:
         contexto = " ".join(contexto.split()[:max_tokens])
     return contexto.strip()
@@ -38,7 +37,7 @@ def chamar_modelo(prompt_completo, modelo="mistral", tokens=300, stream=False):
             "stream": stream,
             "num_predict": tokens
         },
-        stream=stream  # importante: stream=True no requests também
+        stream=stream
     )
     response.raise_for_status()
 
@@ -54,7 +53,14 @@ def chamar_modelo(prompt_completo, modelo="mistral", tokens=300, stream=False):
         return data.get("response", "")
 
 # Função principal de busca de resposta
-def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral", tokens: int = 300, stream: bool = False, embeddings: bool = True):
+def buscar_resposta(
+    perfil: str,
+    pergunta: str,
+    modelo: str = "mistral",
+    tokens: int = 300,
+    stream: bool = False,
+    embeddings: bool = True
+):
     agente = carregar_agente(perfil)
     if not agente:
         return {"error": "Perfil não encontrado."}
@@ -76,8 +82,8 @@ def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral", tokens:
 
     return {
         "instrucoes": instrucoes,
-        "contexto": contexto,
+        "contexto_usado": contexto,
         "prompt_usuario": pergunta,
+        "prompt_final_enviado": prompt_completo,
         "resposta": resposta
     }
-}
