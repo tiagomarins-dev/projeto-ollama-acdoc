@@ -21,7 +21,7 @@ screen -dmS "$OLLAMA_SESSION" bash -c "
 
 # Aguarda o Ollama iniciar
 echo "⏳ Aguardando Ollama iniciar..."
-sleep 5
+sleep 10
 
 # Subindo API no screen separado
 echo "🔧 Subindo API no screen '$API_SESSION'..."
@@ -43,6 +43,7 @@ screen -dmS "$API_SESSION" bash -c "
     uvicorn app.main:app --host 0.0.0.0 --port 9000 --proxy-headers --forwarded-allow-ips '*' --reload
 "
 
+sleep 10
 echo "✅ Tudo rodando!"
 echo "👉 API logs:    screen -r $API_SESSION"
 echo "👉 Ollama logs: screen -r $OLLAMA_SESSION"
