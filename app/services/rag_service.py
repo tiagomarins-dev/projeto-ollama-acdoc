@@ -1,5 +1,5 @@
 # app/services/rag_service.py
-
+from app.models.agent_model import Agent
 import os
 import json
 import requests
@@ -9,12 +9,13 @@ from sentence_transformers import SentenceTransformer, util
 model_embedder = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Funções auxiliares para agentes
-def carregar_agente(perfil):
-    caminho = f"docs/{perfil}/agent.json"
-    if os.path.exists(caminho):
-        with open(caminho, "r") as f:
-            return json.load(f)
-    return None
+def carregar_agente(perfil: str) -> Agent:
+    caminho = f"agents/{perfil}.json"
+    if not os.path.exists(caminho):
+        return None
+    with open(caminho, "r") as f:
+        data = json.load(f)
+        return Agent(**data)  # 👈 monta um Agent de verdade
 
 # Funções auxiliares para contexto
 
