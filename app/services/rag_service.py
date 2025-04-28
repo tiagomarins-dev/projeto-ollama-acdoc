@@ -74,4 +74,8 @@ def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral", tokens:
 
     resposta = chamar_modelo(prompt_completo, modelo=modelo, tokens=tokens, stream=stream)
 
-    return resposta
+    return {
+    "instrucoes": instrucoes,
+    "prompt_usuario": pergunta,
+    "resposta": resposta
+}
