@@ -31,28 +31,18 @@ def consultar_agente(perfil: str):
     return agent
 
 @app.post("/rag/{perfil}")
-def usar_rag(perfil: str, req: PromptRequest, tokens: int = 300, modelo: str = "mistral"):
+def usar_rag(perfil: str, req: PromptRequest, modelo: str = "mistral", tokens: int = 300):
     resposta = buscar_resposta(perfil, req.prompt, modelo=modelo, tokens=tokens)
     return {"resposta": resposta}
 
 @app.post("/gerar")
-def gerar(req: PromptRequest, modelo: str = "mistral", tokens: int = 100):
+def gerar(req: PromptRequest, modelo: str = "mistral", tokens: int = 300):
     return gerar_texto(req, modelo, tokens)
-
-@app.post("/reindexar/{perfil}")
-def reindexar(perfil: str):
-    criar_index(perfil)
-    return {"message": f"Índice do perfil {perfil} recriado com sucesso."}
 
 @app.get("/agents")
 def listar_agentes():
-    agentes_dir = "agents"
-    if not os.path.exists(agentes_dir):
-        return {"agentes": []}
-    
     agentes = []
-    for filename in os.listdir(agentes_dir):
-        if filename.endswith(".json"):
-            perfil = filename.replace(".json", "")
-            agentes.append(perfil)
+    for file_name in os.listdir("agents"):
+        if file_name.endswith(".json"):
+            agentes.append(file_name.replace(".json", ""))
     return {"agentes": agentes}

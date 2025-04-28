@@ -1,82 +1,69 @@
+# app/services/rag_service.py
+
 import os
-import faiss
+import json
 import requests
-import numpy as np
-from typing import List
-from sentence_transformers import SentenceTransformer
-from app.services.ollama_service import gerar_texto
-from app.models.prompt_request import PromptRequest
-from app.services.agent_service import carregar_agente
+from sentence_transformers import SentenceTransformer, util
 
-# Embeddings model
-model_embedding = SentenceTransformer('all-MiniLM-L6-v2')
+# Carregar modelo de embeddings
+model_embedder = SentenceTransformer('all-MiniLM-L6-v2')
 
-# Cache de índices carregados por agente
-cache_indices = {}
+# Funções auxiliares para agentes
+def carregar_agente(perfil):
+    caminho = f"docs/{perfil}/agent.json"
+    if os.path.exists(caminho):
+        with open(caminho, "r") as f:
+            return json.load(f)
+    return None
 
-def carregar_documentos(perfil: str) -> List[str]:
-    """Carrega documentos do perfil"""
-    path = f"docs/{perfil}"
-    textos = []
-    if not os.path.exists(path):
-        return textos
-    for filename in os.listdir(path):
-        if filename.endswith(".txt"):
-            with open(os.path.join(path, filename), "r", encoding="utf-8") as f:
-                textos.append(f.read())
-    return textos
+# Funções auxiliares para contexto
 
-def criar_index(perfil: str):
-    """Cria ou carrega o índice FAISS do perfil"""
-    if perfil in cache_indices:
-        return cache_indices[perfil]
-    
-    textos = carregar_documentos(perfil)
-    if not textos:
-        raise ValueError(f"Nenhum documento encontrado para o perfil {perfil}.")
-    
-    embeddings = model_embedding.encode(textos)
-    index = faiss.IndexFlatL2(embeddings.shape[1])
-    index.add(np.array(embeddings, dtype='float32'))
-    
-    cache_indices[perfil] = (index, textos)
-    return index, textos
+def carregar_contexto(perfil):
+    dir_path = f"docs/{perfil}"
+    contexto = []
+    if os.path.exists(dir_path):
+        for file_name in os.listdir(dir_path):
+            if file_name.endswith(".txt") and file_name != "agent.json":
+                with open(os.path.join(dir_path, file_name), "r") as f:
+                    contexto.append(f.read())
+    return "\n".join(contexto)
 
-
-def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral", tokens: int = 300):
-    # Carrega o agente e as instruções
-    agent = carregar_agente(perfil)
-    instrucoes = agent.instrucoes if agent else ""
-
-    # Carrega o índice FAISS e textos
-    if perfil not in cache_indices:
-        criar_index(perfil)
-    index, textos = cache_indices[perfil]
-
-    # Vetoriza a pergunta
-    pergunta_embedding = model_embedding.encode([pergunta])
-    
-    # Busca o contexto mais próximo
-    D, I = index.search(np.array(pergunta_embedding, dtype='float32'), k=1)
-    contexto = textos[I[0][0]] if I[0][0] != -1 else ""
-
-    # Monta o prompt completo
-    prompt_completo = f"{instrucoes}\n\nContexto:\n{contexto}\n\nPergunta:\n{pergunta}"
-
-    # Chama o modelo especificado
-    resposta = chamar_modelo(prompt_completo, modelo=modelo, tokens=tokens)
-    
-    return resposta
-
-def chamar_modelo(prompt: str, modelo: str = "mistral", tokens: int = 300):
+# Função para chamar o modelo Ollama
+def chamar_modelo(prompt_completo, modelo="mistral", tokens=300, stream=False):
     response = requests.post(
         "http://127.0.0.1:11434/api/generate",
         json={
             "model": modelo,
-            "prompt": prompt,
-            "stream": False,
+            "prompt": prompt_completo,
+            "stream": stream,
             "num_predict": tokens
         }
     )
-    return response.json().get("response")
+    response.raise_for_status()
+    data = response.json()
+    return data.get("response", "")
 
+# Função principal de busca de resposta
+
+def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral", tokens: int = 300, stream: bool = False):
+    agente = carregar_agente(perfil)
+    if not agente:
+        return {"error": "Perfil não encontrado."}
+
+    contexto = carregar_contexto(perfil)
+    if not contexto:
+        return {"error": "Nenhum contexto encontrado para este perfil."}
+
+    instrucoes = agente.get("instrucoes", "")
+
+    prompt_completo = f"{instrucoes}\n\nContexto:\n{contexto}\n\nPergunta:\n{pergunta}"
+
+    resposta = chamar_modelo(prompt_completo, modelo=modelo, tokens=tokens, stream=stream)
+
+    return resposta
+
+# Opcional: futura criação de embeddings
+
+def criar_index(perfil):
+    # Implementar aqui se quiser gerar embeddings dos documentos (opcional)
+    pass
