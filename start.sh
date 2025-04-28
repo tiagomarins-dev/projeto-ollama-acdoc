@@ -1,40 +1,45 @@
 #!/bin/bash
 
-# Nome das sessões do screen
+# Nome das sessões
 API_SESSION="minhaapi"
 OLLAMA_SESSION="ollama"
 
-# Ativa o ambiente virtual e sobe o servidor dentro do screen
 echo "🚀 Iniciando ambientes..."
 
-# Mata sessões antigas, se existirem
-for SESSION in "$API_SESSION" "$OLLAMA_SESSION"; do
-    if screen -list | grep -q "$SESSION"; then
-        echo "⚡ Matando sessão antiga '$SESSION'..."
-        screen -S "$SESSION" -X quit
-    fi
-done
+# Ativa o ambiente virtual
+source venv/bin/activate
 
-# Subir o Ollama em screen separado
+# Subindo Ollama no screen separado
 echo "🐳 Subindo Ollama no screen '$OLLAMA_SESSION'..."
+if screen -list | grep -q "$OLLAMA_SESSION"; then
+    echo "Sessão Ollama existente encontrada. Matando..."
+    screen -S "$OLLAMA_SESSION" -X quit
+fi
 screen -dmS "$OLLAMA_SESSION" bash -c "
     ollama serve
 "
 
-# Aguarda Ollama subir
+# Aguarda o Ollama iniciar
 echo "⏳ Aguardando Ollama iniciar..."
 sleep 5
 
-# Subir a API no outro screen
+# Subindo API no screen separado
 echo "🔧 Subindo API no screen '$API_SESSION'..."
+if screen -list | grep -q "$API_SESSION"; then
+    echo "Sessão API existente encontrada. Matando..."
+    screen -S "$API_SESSION" -X quit
+fi
 screen -dmS "$API_SESSION" bash -c "
     source venv/bin/activate
-    echo '🔪 Matando processos na porta 9000...'
+    echo 'Matando processos na porta 9000...'
     if command -v fuser &> /dev/null; then
         fuser -k 9000/tcp
     else
         lsof -ti tcp:9000 | xargs kill -9
     fi
+    echo '⏳ Inicializando Indexação RAG...'
+    python3 app/scripts/reindex_all.py
+    echo '🚀 Subindo servidor Uvicorn...'
     uvicorn app.main:app --host 0.0.0.0 --port 9000 --proxy-headers --forwarded-allow-ips '*' --reload
 "
 

@@ -4,6 +4,7 @@ import os
 import json
 import requests
 from sentence_transformers import SentenceTransformer, util
+from app.services.index_service import criar_index, buscar_no_index
 
 # Carregar modelo de embeddings
 model_embedder = SentenceTransformer('all-MiniLM-L6-v2')
@@ -16,18 +17,6 @@ def carregar_agente(perfil: str) -> Agent:
     with open(caminho, "r") as f:
         data = json.load(f)
         return Agent(**data)  # 👈 monta um Agent de verdade
-
-# Funções auxiliares para contexto
-
-def carregar_contexto(perfil):
-    dir_path = f"docs/{perfil}"
-    contexto = []
-    if os.path.exists(dir_path):
-        for file_name in os.listdir(dir_path):
-            if file_name.endswith(".txt") and file_name != "agent.json":
-                with open(os.path.join(dir_path, file_name), "r") as f:
-                    contexto.append(f.read())
-    return "\n".join(contexto)
 
 # Função para chamar o modelo Ollama
 def chamar_modelo(prompt_completo, modelo="mistral", tokens=300, stream=False):
@@ -51,11 +40,13 @@ def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral", tokens:
     if not agente:
         return {"error": "Perfil não encontrado."}
 
-    contexto = carregar_contexto(perfil)
+    # Buscar o contexto mais relevante usando embeddings
+    contexto = buscar_no_index(perfil, pergunta)
+
     if not contexto:
         return {"error": "Nenhum contexto encontrado para este perfil."}
 
-    instrucoes = agente.get("instrucoes", "")
+    instrucoes = agente.instrucoes if hasattr(agente, "instrucoes") else ""
 
     prompt_completo = f"{instrucoes}\n\nContexto:\n{contexto}\n\nPergunta:\n{pergunta}"
 
@@ -63,8 +54,7 @@ def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral", tokens:
 
     return resposta
 
-# Opcional: futura criação de embeddings
+# Função para criar índices de documentos de um perfil (manual ou após upload)
 
-def criar_index(perfil):
-    # Implementar aqui se quiser gerar embeddings dos documentos (opcional)
-    pass
+def criar_index_para_perfil(perfil):
+    criar_index(perfil)
