@@ -14,7 +14,21 @@ def carregar_agente(perfil: str) -> Agent:
         data = json.load(f)
         return Agent(**data)
 
-# Funçõo para chamar o modelo Ollama
+def carregar_todos_arquivos(perfil: str, max_tokens: int = 5000):
+    dir_path = f"docs/{perfil}"
+    contexto = ""
+    if os.path.exists(dir_path):
+        for file_name in os.listdir(dir_path):
+            if file_name.endswith(".txt"):
+                with open(os.path.join(dir_path, file_name), "r") as f:
+                    texto = f.read()
+                    contexto += texto + "\n\n"
+    # Corta o contexto se ultrapassar max_tokens caracteres aproximados
+    if len(contexto.split()) > max_tokens:
+        contexto = " ".join(contexto.split()[:max_tokens])
+    return contexto.strip()
+
+# Função para chamar o modelo Ollama
 def chamar_modelo(prompt_completo, modelo="mistral", tokens=300, stream=False):
     response = requests.post(
         "http://127.0.0.1:11434/api/generate",
@@ -24,7 +38,7 @@ def chamar_modelo(prompt_completo, modelo="mistral", tokens=300, stream=False):
             "stream": stream,
             "num_predict": tokens
         },
-        stream=stream  # 👈 importante: stream=True no requests também
+        stream=stream  # importante: stream=True no requests também
     )
     response.raise_for_status()
 
@@ -40,15 +54,19 @@ def chamar_modelo(prompt_completo, modelo="mistral", tokens=300, stream=False):
         return data.get("response", "")
 
 # Função principal de busca de resposta
-
-def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral", tokens: int = 300, stream: bool = False):
+def buscar_resposta(perfil: str, pergunta: str, modelo: str = "mistral", tokens: int = 300, stream: bool = False, embeddings: bool = True):
     agente = carregar_agente(perfil)
     if not agente:
         return {"error": "Perfil não encontrado."}
 
-    contexto = buscar_contexto(perfil, pergunta)
-    if not contexto:
-        return {"error": "Perfil ainda não indexado."}
+    if embeddings:
+        contexto = buscar_contexto(perfil, pergunta)
+        if not contexto:
+            return {"error": "Perfil ainda não indexado."}
+    else:
+        contexto = carregar_todos_arquivos(perfil)
+        if not contexto:
+            return {"error": "Nenhum conteúdo encontrado para este perfil."}
 
     instrucoes = agente.instrucoes if hasattr(agente, "instrucoes") else ""
 
