@@ -1,7 +1,6 @@
 # app/services/rag_service.py
-
 from app.models.agent_model import Agent
-from app.services.index_service import criar_index
+from app.services.index_service import criar_index, buscar_contexto
 import os
 import json
 import requests
